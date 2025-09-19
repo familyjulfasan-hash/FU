@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner de Codes QR par Équipe</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        .team-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .team-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .qr-code-reader {
+            width: 100%;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .scanned-value {
+            margin-top: 10px;
+            font-size: 1.1em;
+            color: #007BFF;
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            color: white;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #results {
+            margin-top: 20px;
+            font-size: 1.2em;
+            text-align: center;
+            font-weight: bold;
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Scanner de Code QR</h1>
+        <p style="text-align: center;">Scannez un code pour chaque équipe. La valeur doit être un nombre.</p>
+
+        <div id="scanner-container" style="display: none;">
+            <div id="reader" class="qr-code-reader"></div>
+        </div>
+
+        <div class="team-section">
+            <div class="team-title">Équipe 1</div>
+            <button onclick="startScan('team1')">Scanner le code</button>
+            <div id="team1-value" class="scanned-value">Code scanné : aucun</div>
+        </div>
+
+        <div class="team-section">
+            <div class="team-title">Équipe 2</div>
+            <button onclick="startScan('team2')">Scanner le code</button>
+            <div id="team2-value" class="scanned-value">Code scanné : aucun</div>
+        </div>
+
+        <div class="team-section">
+            <div class="team-title">Équipe 3</div>
+            <button onclick="startScan('team3')">Scanner le code</button>
+            <div id="team3-value" class="scanned-value">Code scanné : aucun</div>
+        </div>
+
+        <div class="team-section">
+            <div class="team-title">Équipe 4</div>
+            <button onclick="startScan('team4')">Scanner le code</button>
+            <div id="team4-value" class="scanned-value">Code scanné : aucun</div>
+        </div>
+
+        <hr style="width: 80%; border: 1px solid #ddd; margin: 20px auto;">
+        
+        <button onclick="compareCodes()" style="display: block; margin: 0 auto; background-color: #28a745;">Vérifier les correspondances</button>
+        <div id="results"></div>
+    </div>
+
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/dist/html5-qrcode.min.js"></script>
+    <script>
+        const scannedCodes = {};
+        let currentScanner = null;
+
+        function onScanSuccess(decodedText, decodedResult) {
+            console.log(`Code scanné = ${decodedText}`, decodedResult);
+            const teamId = currentScanner.id;
+            scannedCodes[teamId] = decodedText;
+            document.getElementById(`${teamId}-value`).innerText = `Code scanné : ${decodedText}`;
+            stopScan();
+        }
+
+        function onScanFailure(error) {
+            // console.warn(`Code non reconnu.`, error);
+        }
+
+        function startScan(teamId) {
+            if (currentScanner) {
+                stopScan();
+            }
+
+            const html5QrcodeScanner = new Html5Qrcode(`${teamId}-reader`);
+            currentScanner = html5QrcodeScanner;
+            currentScanner.id = teamId;
+
+            document.getElementById("scanner-container").style.display = "block";
+            
+            html5QrcodeScanner.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 }
+                },
+                onScanSuccess,
+                onScanFailure
+            );
+        }
+
+        function stopScan() {
+            if (currentScanner) {
+                currentScanner.stop().then(ignore => {
+                    document.getElementById("scanner-container").style.display = "none";
+                }).catch(err => {
+                    console.error("Échec de l'arrêt du scan", err);
+                });
+            }
+        }
+
+        function compareCodes() {
+            const teams = ['team1', 'team2', 'team3', 'team4'];
+            const results = [];
+            const foundMatches = new Set();
+
+            for (let i = 0; i < teams.length; i++) {
+                for (let j = i + 1; j < teams.length; j++) {
+                    const teamA = teams[i];
+                    const teamB = teams[j];
+
+                    if (scannedCodes[teamA] && scannedCodes[teamB] && scannedCodes[teamA] === scannedCodes[teamB]) {
+                        results.push(`L'${teamA.replace('team', 'équipe ')} et l'${teamB.replace('team', 'équipe ')} ont le même code : ${scannedCodes[teamA]}`);
+                        foundMatches.add(teamA);
+                        foundMatches.add(teamB);
+                    }
+                }
+            }
+
+            if (results.length > 0) {
+                document.getElementById('results').innerHTML = results.join('<br>');
+            } else {
+                document.getElementById('results').innerText = "Aucune correspondance trouvée.";
+            }
+        }
+    </script>
+</body>
+</html>
