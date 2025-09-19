@@ -11,7 +11,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             background-color: #f0f0f0;
             margin: 0;
             padding: 20px;
@@ -72,7 +72,12 @@
             font-size: 1.2em;
             text-align: center;
             font-weight: bold;
-            color: #28a745;
+        }
+        .stop-scan-button {
+            background-color: #dc3545;
+        }
+        .stop-scan-button:hover {
+            background-color: #c82333;
         }
     </style>
 </head>
@@ -83,7 +88,8 @@
         <p style="text-align: center;">Scannez un code pour chaque équipe. La valeur doit être un nombre.</p>
 
         <div id="scanner-container" style="display: none;">
-            <div id="reader" class="qr-code-reader"></div>
+            <div id="reader"></div>
+            <button onclick="stopScan()" class="stop-scan-button">Arrêter le scan</button>
         </div>
 
         <div class="team-section">
@@ -119,31 +125,32 @@
     <script src="https://unpkg.com/html5-qrcode@2.3.8/dist/html5-qrcode.min.js"></script>
     <script>
         const scannedCodes = {};
-        let currentScanner = null;
+        let html5QrcodeScanner = null;
+        const scannerContainer = document.getElementById('scanner-container');
 
         function onScanSuccess(decodedText, decodedResult) {
             console.log(`Code scanné = ${decodedText}`, decodedResult);
-            const teamId = currentScanner.id;
+            const teamId = html5QrcodeScanner.id;
             scannedCodes[teamId] = decodedText;
             document.getElementById(`${teamId}-value`).innerText = `Code scanné : ${decodedText}`;
             stopScan();
         }
 
         function onScanFailure(error) {
-            // console.warn(`Code non reconnu.`, error);
+            // En mode de production, vous pouvez ignorer cette erreur
+            // car elle se produit si aucun code QR n'est trouvé dans le flux vidéo.
         }
 
         function startScan(teamId) {
-            if (currentScanner) {
-                stopScan();
+            if (html5QrcodeScanner) {
+                // Empêche de lancer un nouveau scan si un autre est déjà en cours
+                return;
             }
 
-            const html5QrcodeScanner = new Html5Qrcode(`${teamId}-reader`);
-            currentScanner = html5QrcodeScanner;
-            currentScanner.id = teamId;
+            scannerContainer.style.display = "block";
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            html5QrcodeScanner.id = teamId;
 
-            document.getElementById("scanner-container").style.display = "block";
-            
             html5QrcodeScanner.start(
                 { facingMode: "environment" },
                 {
@@ -152,43 +159,14 @@
                 },
                 onScanSuccess,
                 onScanFailure
-            );
+            ).catch(err => {
+                // Cette erreur se produit souvent sur mobile si l'utilisateur refuse l'accès à la caméra
+                console.error("Échec du démarrage du scanner:", err);
+                scannerContainer.style.display = "none";
+                alert("Impossible de démarrer le scanner. Veuillez autoriser l'accès à la caméra et réessayer.");
+                html5QrcodeScanner = null;
+            });
         }
 
         function stopScan() {
-            if (currentScanner) {
-                currentScanner.stop().then(ignore => {
-                    document.getElementById("scanner-container").style.display = "none";
-                }).catch(err => {
-                    console.error("Échec de l'arrêt du scan", err);
-                });
-            }
-        }
-
-        function compareCodes() {
-            const teams = ['team1', 'team2', 'team3', 'team4'];
-            const results = [];
-            const foundMatches = new Set();
-
-            for (let i = 0; i < teams.length; i++) {
-                for (let j = i + 1; j < teams.length; j++) {
-                    const teamA = teams[i];
-                    const teamB = teams[j];
-
-                    if (scannedCodes[teamA] && scannedCodes[teamB] && scannedCodes[teamA] === scannedCodes[teamB]) {
-                        results.push(`L'${teamA.replace('team', 'équipe ')} et l'${teamB.replace('team', 'équipe ')} ont le même code : ${scannedCodes[teamA]}`);
-                        foundMatches.add(teamA);
-                        foundMatches.add(teamB);
-                    }
-                }
-            }
-
-            if (results.length > 0) {
-                document.getElementById('results').innerHTML = results.join('<br>');
-            } else {
-                document.getElementById('results').innerText = "Aucune correspondance trouvée.";
-            }
-        }
-    </script>
-</body>
-</html>
+            if (html5Qrcode
