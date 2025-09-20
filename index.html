@@ -1,206 +1,223 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Scan4Teams — Scanner QR numérique pour 4 équipes</title>
-  <style>
-    :root{font-family:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial;}
-    body{max-width:900px;margin:24px auto;padding:18px;background:#f7f8fa;border-radius:12px}
-    h1{font-size:1.3rem;margin:0 0 8px}
-    p.lead{margin:0 0 18px;color:#333}
-    .teams{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-    .team{flex:1 1 45%;background:white;padding:10px;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
-    .team h3{margin:0 0 6px;font-size:1rem}
-    .team .code{font-weight:700;font-size:1.05rem;color:#0b5ed7}
-    #scannerContainer{background:#111;padding:10px;border-radius:10px;min-height:220px;display:flex;align-items:center;justify-content:center;color:white}
-    .controls{display:flex;gap:8px;margin:12px 0}
-    button{padding:8px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.08);background:white;cursor:pointer}
-    button.primary{background:#0b5ed7;color:white;border:none}
-    .results{margin-top:12px}
-    .match{background:#e6f4ea;padding:8px;border-radius:8px;margin-bottom:8px}
-    .warn{background:#fff3cd;padding:8px;border-radius:8px}
-    small.note{color:#666}
-    input[type=text]{padding:8px;border-radius:8px;border:1px solid #ddd;width:100%}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saisie et Comparaison de Données</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .input-group {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .input-group input {
+            width: 60px;
+            padding: 8px;
+            margin: 0 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .input-group span {
+            font-size: 1.2em;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            color: white;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #message {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #dc3545;
+        }
+        #results-section {
+            margin-top: 20px;
+        }
+        #results {
+            font-size: 1.1em;
+            text-align: left;
+            padding-left: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        .final-results {
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #28a745;
+        }
+    </style>
 </head>
 <body>
-  <h1>Scan4Teams</h1>
-  <p class="lead">Application simple (fichier unique) pour que 4 équipes scannent l'une après l'autre un QR code numérique. L'app affiche ensuite quelles équipes ont le même code.</p>
 
-  <div class="teams" id="teamsList"></div>
+    <div class="container">
+        <h1 id="main-title">Saisie Joueur 1</h1>
+        <div id="input-section">
+            <div class="input-group">
+                <input type="number" id="num1" min="0" max="36" placeholder="Nombre">
+                <span>-</span>
+                <input type="text" id="letter1" maxlength="1" placeholder="Lettre" style="text-transform: uppercase;">
+            </div>
+            <div class="input-group">
+                <input type="number" id="num2" min="0" max="36" placeholder="Nombre">
+                <span>-</span>
+                <input type="text" id="letter2" maxlength="1" placeholder="Lettre" style="text-transform: uppercase;">
+            </div>
+            <div class="input-group">
+                <input type="number" id="num3" min="0" max="36" placeholder="Nombre">
+                <span>-</span>
+                <input type="text" id="letter3" maxlength="1" placeholder="Lettre" style="text-transform: uppercase;">
+            </div>
+            <button id="next-player-btn" onclick="nextPlayer()">Joueur suivant</button>
+            <div id="message"></div>
+        </div>
 
-  <div id="scannerSection">
-    <h2 style="font-size:1rem;margin-top:8px">Scanner (équipe <span id="currentTeamLabel">—</span>)</h2>
-    <div id="scannerContainer">
-      <div id="reader" style="width:100%"></div>
-      <div id="placeholder" style="text-align:center;color:#ddd">Appuyez sur "Démarrer le scan" pour ouvrir la caméra</div>
+        <div id="results-section" class="hidden">
+            <h2 id="final-message"></h2>
+            <div id="results" class="final-results"></div>
+            <button onclick="window.location.reload()" style="background-color: #28a745;">Nouvelle partie</button>
+        </div>
     </div>
 
-    <div class="controls">
-      <button id="startBtn" class="primary">Démarrer le scan</button>
-      <button id="stopBtn">Arrêter</button>
-      <button id="nextBtn">Passer à l'équipe suivante</button>
-      <button id="resetBtn">Réinitialiser</button>
-    </div>
+    <script>
+        let currentPlayer = 1;
+        const totalPlayers = 4;
+        const allPlayerInputs = [];
+        const validLetters = ['A', 'B', 'C', 'D', 'E', 'X'];
 
-    <div style="margin-top:8px">
-      <label><small>Ou saisir manuellement le code numérique pour l'équipe courante :</small></label>
-      <div style="display:flex;gap:8px;margin-top:6px"><input id="manualInput" type="text" placeholder="Ex. 123456" /><button id="applyManual">Enregistrer</button></div>
-    </div>
+        function validateInput(num, letter) {
+            const numValue = parseInt(num);
+            if (num === "" || letter === "") {
+                return "Veuillez saisir un nombre et une lettre.";
+            }
+            if (isNaN(numValue) || numValue < 0 || numValue > 36) {
+                return "Le nombre doit être entre 0 et 36.";
+            }
+            if (!validLetters.includes(letter.toUpperCase())) {
+                return "La lettre doit être A, B, C, D, E ou X.";
+            }
+            return null;
+        }
 
-    <div class="results" id="resultArea"></div>
-  </div>
+        function nextPlayer() {
+            const num1 = document.getElementById('num1').value;
+            const letter1 = document.getElementById('letter1').value.toUpperCase();
+            const num2 = document.getElementById('num2').value;
+            const letter2 = document.getElementById('letter2').value.toUpperCase();
+            const num3 = document.getElementById('num3').value;
+            const letter3 = document.getElementById('letter3').value.toUpperCase();
 
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
-  <script>
-    // Config
-    const TEAMS = ["Équipe A","Équipe B","Équipe C","Équipe D"]; // change si besoin
+            const error1 = validateInput(num1, letter1);
+            const error2 = validateInput(num2, letter2);
+            const error3 = validateInput(num3, letter3);
 
-    // Etat en mémoire (pas de BD)
-    const state = {
-      codes: Array(4).fill(null), // valeurs scannées (string)
-      current: 0,
-      scanner: null,
-      isScanning: false
-    };
+            const message = document.getElementById('message');
+            if (error1 || error2 || error3) {
+                message.innerText = error1 || error2 || error3;
+                return;
+            }
 
-    // UI elements
-    const teamsList = document.getElementById('teamsList');
-    const startBtn = document.getElementById('startBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const currentTeamLabel = document.getElementById('currentTeamLabel');
-    const resultArea = document.getElementById('resultArea');
-    const manualInput = document.getElementById('manualInput');
-    const applyManual = document.getElementById('applyManual');
+            allPlayerInputs.push({
+                player: currentPlayer,
+                numbers: [
+                    parseInt(num1),
+                    parseInt(num2),
+                    parseInt(num3)
+                ]
+            });
 
-    // Afficher la liste des équipes et leur code (si présent)
-    function renderTeams(){
-      teamsList.innerHTML = '';
-      TEAMS.forEach((name, i)=>{
-        const div = document.createElement('div'); div.className='team';
-        const h = document.createElement('h3'); h.textContent = name + (i===state.current ? ' ←' : '');
-        const p = document.createElement('div');
-        p.innerHTML = state.codes[i] ? `<div class="code">${escapeHtml(state.codes[i])}</div><small class="note">(scanné)</small>` : `<small class="note">(pas encore scanné)</small>`;
-        div.appendChild(h); div.appendChild(p); teamsList.appendChild(div);
-      })
-      currentTeamLabel.textContent = TEAMS[state.current];
-    }
+            currentPlayer++;
+            if (currentPlayer <= totalPlayers) {
+                document.getElementById('main-title').innerText = `Saisie Joueur ${currentPlayer}`;
+                document.getElementById('num1').value = '';
+                document.getElementById('letter1').value = '';
+                document.getElementById('num2').value = '';
+                document.getElementById('letter2').value = '';
+                document.getElementById('num3').value = '';
+                document.getElementById('letter3').value = '';
+                message.innerText = "";
+            } else {
+                showResults();
+            }
+        }
 
-    function escapeHtml(unsafe){return unsafe.replace(/[&<>"']/g, function(m){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#039;"}[m]});}
+        function showResults() {
+            document.getElementById('input-section').classList.add('hidden');
+            document.getElementById('main-title').innerText = "Fin des saisies";
+            document.getElementById('results-section').classList.remove('hidden');
+            
+            const resultsElement = document.getElementById('results');
+            resultsElement.innerHTML = '';
+            
+            const matchesFound = {};
 
-    // Calculer et montrer résultats
-    function showResults(){
-      resultArea.innerHTML = '';
-      const mapping = {};
-      state.codes.forEach((code, idx)=>{
-        if(code==null) return;
-        if(!mapping[code]) mapping[code]=[];
-        mapping[code].push({team:TEAMS[idx], idx: idx+1});
-      });
+            for (let i = 0; i < allPlayerInputs.length; i++) {
+                const playerA = allPlayerInputs[i];
+                for (let j = i + 1; j < allPlayerInputs.length; j++) {
+                    const playerB = allPlayerInputs[j];
 
-      const groups = Object.values(mapping).filter(g=>g.length>1);
-      if(groups.length===0){
-        resultArea.innerHTML = '<div class="warn">Aucune équipe ne partage le même code (ou il n\'y a pas encore assez de scans).</div>';
-      } else {
-        groups.forEach(g=>{
-          const el = document.createElement('div'); el.className='match';
-          const teamsText = g.map(x=>x.team + ` (Equipe ${x.idx})`).join(' — ');
-          el.innerHTML = `<strong>Code partagé :</strong> ${escapeHtml(g[0].code || (state.codes[g[0].idx-1]))}<div style="margin-top:6px"><small>${teamsText}</small></div>`;
-          resultArea.appendChild(el);
-        })
-      }
+                    const commonNumbers = playerA.numbers.filter(num => playerB.numbers.includes(num));
+                    
+                    if (commonNumbers.length > 0) {
+                        for(const number of commonNumbers) {
+                            if (!matchesFound[number]) {
+                                matchesFound[number] = new Set();
+                            }
+                            matchesFound[number].add(playerA.player);
+                            matchesFound[number].add(playerB.player);
+                        }
+                    }
+                }
+            }
 
-      // afficher les codes uniques (optionnel)
-      const notScanned = state.codes.map((c,i)=>c?null:`${TEAMS[i]} (Equipe ${i+1})`).filter(Boolean);
-      if(notScanned.length) resultArea.innerHTML += `<div class="warn" style="margin-top:8px">Pas encore scanné: ${notScanned.join(', ')}</div>`;
-    }
-
-    // Démarrer scanner pour l'équipe courante
-    async function startScanner(){
-      if(state.isScanning) return;
-      const reader = document.getElementById('reader');
-      // html5-qrcode
-      state.scanner = new Html5Qrcode("reader");
-      const config = { fps: 10, qrbox: {width: 250, height: 250} };
-      try{
-        await state.scanner.start({ facingMode: "environment" }, config, onScanSuccess);
-        state.isScanning = true;
-      } catch(err){
-        alert('Impossible d\'accéder à la caméra: ' + err);
-        state.scanner.clear(); state.scanner = null; state.isScanning=false;
-      }
-    }
-
-    // Stop scanner
-    async function stopScanner(){
-      if(state.scanner){
-        try{ await state.scanner.stop(); await state.scanner.clear(); }catch(e){}
-        state.scanner = null; state.isScanning = false;
-      }
-      // remettre placeholder
-      const reader = document.getElementById('reader');
-      reader.innerHTML = '';
-    }
-
-    // Callback sur lecture QR
-    function onScanSuccess(decodedText, decodedResult){
-      // N'accepter que des codes numériques
-      const numeric = decodedText.trim();
-      if(/^\d+$/.test(numeric)){
-        // enregistrer pour l'équipe courante
-        state.codes[state.current] = numeric;
-        stopScanner();
-        renderTeams();
-        showResults();
-        // avancer automatiquement si possible
-        if(state.current < TEAMS.length-1){ state.current++; renderTeams(); }
-        else { alert('Tous les scans complétés (ou vous pouvez réinitialiser).'); }
-      } else {
-        // Ne pas enregistrer, mais informer
-        alert('Code lu mais non numérique: "' + decodedText + '". Veuillez scanner un QR contenant uniquement des chiffres.');
-      }
-    }
-
-    // Avancer manuellement
-    function nextTeam(){
-      if(state.current < TEAMS.length-1) state.current++;
-      renderTeams();
-    }
-
-    // Appliquer saisie manuelle
-    function applyManualForCurrent(){
-      const v = manualInput.value.trim();
-      if(!/^\d+$/.test(v)){ alert('Veuillez entrer uniquement des chiffres.'); return; }
-      state.codes[state.current] = v;
-      renderTeams(); showResults();
-      if(state.current < TEAMS.length-1) state.current++;
-      renderTeams();
-      manualInput.value = '';
-    }
-
-    // Reset
-    async function resetAll(){
-      const ok = confirm('Réinitialiser tous les scans ?');
-      if(!ok) return;
-      await stopScanner();
-      state.codes = Array(4).fill(null); state.current=0; renderTeams(); showResults();
-    }
-
-    // liés aux boutons
-    startBtn.addEventListener('click', ()=>startScanner());
-    stopBtn.addEventListener('click', ()=>stopScanner());
-    nextBtn.addEventListener('click', ()=>nextTeam());
-    resetBtn.addEventListener('click', ()=>resetAll());
-    applyManual.addEventListener('click', ()=>applyManualForCurrent());
-
-    // initialisation
-    renderTeams(); showResults();
-
-    // nettoyer à la fermeture de la page
-    window.addEventListener('beforeunload', ()=>{ if(state.scanner) state.scanner.clear(); });
-  </script>
+            const finalMessage = document.getElementById('final-message');
+            if (Object.keys(matchesFound).length > 0) {
+                finalMessage.innerText = "Correspondances trouvées :";
+                for (const number in matchesFound) {
+                    const players = Array.from(matchesFound[number]);
+                    const playerString = players.map(p => `Joueur ${p}`).join(' et ');
+                    resultsElement.innerHTML += `<p>Numéro <strong>${number}</strong> : trouvé par les ${playerString}</p>`;
+                }
+            } else {
+                finalMessage.innerText = "Aucune correspondance trouvée.";
+            }
+        }
+    </script>
 </body>
 </html>
